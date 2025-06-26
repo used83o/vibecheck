@@ -170,3 +170,17 @@ function mouseDragged() {
 function mouseReleased() {
 	grbing = false;
 }
+
+function mousePressed() {
+	if (getAudioContext().state !== 'running') {
+		getAudioContext().resume();
+		// テスト用：短い音を鳴らす（不要なら消してOK）
+		// synth.play('C4', 0.1, 0, 0.1);
+	}
+}
+
+function touchStarted() {
+	if (getAudioContext().state !== 'running') {
+		getAudioContext().resume();
+	}
+}
