@@ -44,7 +44,8 @@ let rhythmTimer = 0;
 let rhythmInterval = 60; // Frames between ball generation (adjust for different tempos)
 let rhythmPattern = [1, 0, 1, 0, 1, 0, 1, 0]; // Pattern of beats (1 = ball, 0 = rest)
 let rhythmStep = 0;
-let rhythmBPM = 120; // Beats per minute
+let rhythmBPM = 180; // Beats per minute
+let rhythmBalls = []; // Track balls created in rhythm mode
 
 // Musical structure variables
 let currentScale = ["C", "D", "E", "G", "A"]; // Pentatonic scale (current)
@@ -256,6 +257,17 @@ function draw() {
 				createParticleExplosion(obsbox[i].position.x, obsbox[i].position.y, color(255, 100, 100));
 			}
 			
+			// Remove rhythm mode balls on collision
+			if (rhythmModeEnabled) {
+				for (let j = rhythmBalls.length - 1; j >= 0; j--) {
+					if (rhythmBalls[j].collides(obsbox[i])) {
+						rhythmBalls[j].remove();
+						rhythmBalls.splice(j, 1);
+						break; // Only remove one ball per collision
+					}
+				}
+			}
+			
 		}
 		
 		obsbox[i].color = color(ding[i]); // <- 発音体の変色
@@ -270,6 +282,9 @@ function draw() {
 	if (rhythmModeEnabled) {
 		rhythmTimer++;
 		
+		// Control BPM with adjuster x position when in rhythm mode
+		rhythmBPM = map(adj.position.x, hw + adjs / 2, width - adjs / 2, 60, 240);
+		
 		// Calculate interval based on BPM (60 FPS / (BPM / 60) / 4 for quarter notes)
 		rhythmInterval = Math.floor(60 / (rhythmBPM / 60) / 4);
 		
@@ -278,13 +293,17 @@ function draw() {
 			
 			// Check if current step should generate a ball
 			if (rhythmPattern[rhythmStep] === 1) {
-				// Generate ball at random position on left side, higher up for better collisions
-				let ballX = random(ballz/2, hw - ballz/2);
-				let ballY = random(ballz/2, height * 0.3); // Spawn in top 30% of screen
+				// Generate ball at obsbox positions for better targeting
+				let targetIndex = floor(random(obsbox.length)); // Pick a random obsbox
+				let ballX = obsbox[targetIndex].position.x; // Use obsbox x position
+				let ballY = 50; // Fixed spawn height for consistent timing
 				
-				ball = new Sprite(ballX, ballY, ballz);
+				ball = new Sprite(ballX, ballY, 16);
 				ball.color = 255;
 				balls.add(ball);
+				
+				// Track this ball as a rhythm mode ball
+				rhythmBalls.push(ball);
 				
 				ballin[n] = ball;
 				n += 1;
@@ -508,7 +527,7 @@ function draw() {
 	textAlign(LEFT);
 	textSize(12);
 	text("Rhythm Mode: " + (rhythmModeEnabled ? "ON" : "OFF"), hw + 10, 20);
-	text("BPM: " + rhythmBPM, hw + 10, 35);
+	text("BPM: " + round(rhythmBPM) + (rhythmModeEnabled ? " (Live)" : ""), hw + 10, 35);
 	text("Press 'R' to toggle", hw + 10, 50);
 	text("Chord Mode: " + (useChordMode ? "ON" : "OFF"), hw + 10, 65);
 	text("Chord: " + currentScale[chordProgression[currentChord]], hw + 10, 80);
