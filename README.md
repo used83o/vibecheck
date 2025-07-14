@@ -1,2 +1,2 @@
 # vibecheck
-Me trying out vibe coding thing for class
+Me trying out vibe coding thing for the class
